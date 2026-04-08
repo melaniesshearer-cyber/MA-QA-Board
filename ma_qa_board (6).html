@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MA Student Q&A Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Nunito', sans-serif; background: #fdf6ff; min-height: 100vh; }
+
+  #page-header {
+    background: linear-gradient(135deg, #c084fc, #f472b6);
+    color: #fff; padding: 20px 28px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  #page-header .header-icon { font-size: 32px; }
+  #page-header h1 { font-size: 22px; font-weight: 800; margin-bottom: 2px; letter-spacing: -0.3px; }
+  #page-header p { font-size: 13px; opacity: 0.9; font-weight: 600; }
+
+
+  #controls {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    padding: 16px 24px; background: #fff;
+    border-bottom: 2px dashed #e9d5ff;
+  }
+  .name-wrap { position: relative; display: flex; align-items: center; }
+  .name-icon { position: absolute; left: 10px; font-size: 16px; pointer-events: none; }
+  #name-input {
+    padding: 8px 12px 8px 34px; border: 2px solid #d8b4fe;
+    border-radius: 20px; font-size: 14px; font-family: 'Nunito', sans-serif;
+    width: 200px; background: #faf5ff; color: #581c87; font-weight: 600;
+    outline: none; transition: border-color 0.2s;
+  }
+  #name-input::placeholder { color: #c084fc; font-weight: 600; }
+  #name-input:focus { border-color: #a855f7; background: #fff; }
+
+  #filter-btns { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 7px 16px; font-size: 13px; font-weight: 700;
+    border-radius: 20px; border: 2px solid #e9d5ff;
+    background: #fff; cursor: pointer; color: #9333ea;
+    font-family: 'Nunito', sans-serif; transition: all 0.15s;
+  }
+  .filter-btn:hover { background: #f3e8ff; }
+  .filter-btn.active { background: #9333ea; color: #fff; border-color: #9333ea; }
+
+  #add-btn {
+    padding: 8px 20px; font-size: 14px; font-weight: 800;
+    background: #f472b6; color: #fff; border: none;
+    border-radius: 20px; cursor: pointer; font-family: 'Nunito', sans-serif;
+    transition: background 0.15s, transform 0.1s; letter-spacing: 0.2px;
+  }
+  #add-btn:hover { background: #ec4899; transform: scale(1.03); }
+  #add-btn:active { transform: scale(0.98); }
+  #add-btn:disabled { background: #d1d5db; cursor: default; transform: none; }
+
+  #status-bar {
+    padding: 6px 24px; font-size: 12px; color: #a78bfa; font-weight: 600;
+    background: #faf5ff; border-bottom: 1px solid #f3e8ff; min-height: 28px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  #how-to {
+    background: #f3e8ff; border-bottom: 2px dashed #e9d5ff;
+    padding: 14px 24px 16px 24px;
+  }
+  #how-to-content ol {
+    padding-left: 20px; display: flex; flex-direction: column; gap: 8px;
+  }
+  #how-to-content li {
+    font-size: 13px; color: #581c87; font-weight: 600; line-height: 1.5;
+  }
+  #how-to-content li strong { color: #7c3aed; }
+  .tip-grid {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
+  }
+  .tip-pill {
+    background: #fff; border: 2px solid #d8b4fe; border-radius: 20px;
+    padding: 5px 12px; font-size: 12px; font-weight: 700; color: #7c3aed;
+  }
+
+  #instructor-btn {
+    position: absolute; top: 16px; right: 20px;
+    padding: 6px 14px; font-size: 12px; font-weight: 700;
+    background: rgba(255,255,255,0.2); color: #fff;
+    border: 2px solid rgba(255,255,255,0.4); border-radius: 20px;
+    cursor: pointer; font-family: 'Nunito', sans-serif;
+    transition: background 0.15s;
+  }
+  #instructor-btn:hover { background: rgba(255,255,255,0.35); }
+  #instructor-badge {
+    display: none; position: absolute; top: 16px; right: 20px;
+    padding: 6px 14px; font-size: 12px; font-weight: 800;
+    background: #fef9c3; color: #713f12;
+    border: 2px solid #fde047; border-radius: 20px;
+    align-items: center; gap: 8px;
+  }
+  #instructor-badge.visible { display: flex; }
+  #logout-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 13px; color: #a16207; font-weight: 800;
+    font-family: 'Nunito', sans-serif; padding: 0;
+  }
+  #page-header { position: relative; }
+
+  #login-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(124,58,237,0.25); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  #login-overlay.open { display: flex; }
+  #login-modal {
+    background: #fff; border-radius: 20px; border: 3px solid #e9d5ff;
+    padding: 28px; width: 90%; max-width: 360px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  #login-modal h2 { font-size: 18px; font-weight: 800; color: #7c3aed; }
+  #login-modal label { font-size: 13px; color: #7c3aed; font-weight: 700; display: block; margin-bottom: 4px; }
+  #login-pw {
+    width: 100%; padding: 9px 14px; border: 2px solid #e9d5ff; border-radius: 12px;
+    font-size: 14px; font-family: 'Nunito', sans-serif; font-weight: 600;
+    color: #374151; outline: none; transition: border-color 0.2s;
+  }
+  #login-pw:focus { border-color: #a855f7; }
+  #login-error { font-size: 12px; color: #dc2626; font-weight: 700; display: none; }
+  #login-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  #login-cancel {
+    padding: 9px 20px; border: 2px solid #e9d5ff; background: #fff;
+    border-radius: 12px; cursor: pointer; font-size: 14px; font-weight: 700;
+    color: #9333ea; font-family: 'Nunito', sans-serif;
+  }
+  #login-submit {
+    padding: 9px 20px; background: #7c3aed; color: #fff; border: none;
+    border-radius: 12px; cursor: pointer; font-size: 14px; font-weight: 800;
+    font-family: 'Nunito', sans-serif;
+  }
+  .delete-btn { border-color: #fca5a5 !important; color: #dc2626 !important; }
+  .delete-btn:hover { background: #fef2f2 !important; border-color: #f87171 !important; }
+    display: none;
+    background: #fce7f3; border-bottom: 2px dashed #f9a8d4;
+    padding: 10px 24px; font-size: 13px; color: #9d174d; font-weight: 700;
+    cursor: pointer; text-align: center; transition: background 0.15s;
+  }
+  #new-posts-banner:hover { background: #fbcfe8; }
+
+  #board {
+    display: flex; flex-wrap: wrap; gap: 20px;
+    padding: 28px 24px; align-items: flex-start;
+  }
+
+  .note-card {
+    width: 236px; border-radius: 16px 16px 16px 4px;
+    padding: 16px; display: flex; flex-direction: column; gap: 10px;
+    transition: transform 0.15s;
+  }
+  .note-card:hover { transform: rotate(-0.5deg) scale(1.01); }
+
+  .note-color-0 { background: #fef9c3; border: 2px solid #fde047; }
+  .note-color-1 { background: #fce7f3; border: 2px solid #f9a8d4; }
+  .note-color-2 { background: #e0f2fe; border: 2px solid #7dd3fc; }
+  .note-color-3 { background: #dcfce7; border: 2px solid #86efac; }
+  .note-color-4 { background: #f3e8ff; border: 2px solid #d8b4fe; }
+
+  .note-card.answered { background: #dcfce7 !important; border-color: #86efac !important; }
+
+  .note-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px; }
+  .note-author { font-weight: 800; color: #7c3aed; font-size: 13px; }
+  .note-time { color: #a78bfa; font-size: 11px; font-weight: 600; }
+  .note-body { font-size: 14px; color: #374151; line-height: 1.55; word-break: break-word; font-weight: 600; }
+
+  .answered-badge {
+    display: inline-block; background: #bbf7d0; color: #166534;
+    font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 20px;
+    border: 1.5px solid #86efac;
+  }
+  .email-btn {
+    font-size: 11px; font-weight: 700; padding: 4px 10px;
+    border-radius: 10px; border: 2px solid #bfdbfe;
+    background: rgba(255,255,255,0.7); cursor: pointer; color: #1d4ed8;
+    font-family: 'Nunito', sans-serif; text-decoration: none;
+    transition: all 0.12s; display: inline-block;
+  }
+  .email-btn:hover { background: #eff6ff; border-color: #93c5fd; }
+
+  .replies-section { border-top: 2px dashed rgba(0,0,0,0.08); padding-top: 8px; }
+  .reply {
+    font-size: 12px; color: #4b5563; margin-bottom: 6px;
+    padding: 6px 10px; background: rgba(255,255,255,0.7);
+    border-radius: 10px; border: 1px solid rgba(0,0,0,0.06);
+  }
+  .reply-author { font-weight: 800; color: #7c3aed; }
+
+  .reply-input-row { display: flex; gap: 6px; }
+  .reply-input-row input {
+    flex: 1; padding: 6px 10px; font-size: 13px; font-weight: 600;
+    border: 2px solid #e9d5ff; border-radius: 12px;
+    font-family: 'Nunito', sans-serif; background: rgba(255,255,255,0.8);
+    color: #374151; outline: none; transition: border-color 0.2s;
+  }
+  .reply-input-row input:focus { border-color: #a855f7; background: #fff; }
+  .reply-input-row input::placeholder { color: #c4b5fd; }
+  .reply-submit {
+    padding: 6px 12px; font-size: 12px; font-weight: 800;
+    background: #a855f7; color: #fff; border: none;
+    border-radius: 12px; cursor: pointer; font-family: 'Nunito', sans-serif;
+    transition: background 0.15s;
+  }
+  .reply-submit:hover { background: #9333ea; }
+  .reply-submit:disabled { background: #d1d5db; cursor: default; }
+
+  .note-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .action-btn {
+    font-size: 11px; font-weight: 700; padding: 4px 10px;
+    border-radius: 10px; border: 2px solid #e9d5ff;
+    background: rgba(255,255,255,0.7); cursor: pointer; color: #7c3aed;
+    font-family: 'Nunito', sans-serif; transition: all 0.12s;
+  }
+  .action-btn:hover { background: #f3e8ff; border-color: #c084fc; }
+  .action-btn.answered-btn { border-color: #86efac; color: #15803d; }
+  .action-btn.answered-btn:hover { background: #dcfce7; }
+  .action-btn.flag-btn { border-color: #fdba74; color: #c2410c; }
+  .action-btn.flag-btn:hover { background: #fff7ed; }
+  .action-btn:disabled { opacity: 0.4; cursor: default; }
+
+  #modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(124,58,237,0.25); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  #modal-overlay.open { display: flex; }
+  #modal {
+    background: #fff; border-radius: 20px; border: 3px solid #e9d5ff;
+    padding: 28px; width: 90%; max-width: 440px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  #modal h2 { font-size: 20px; font-weight: 800; color: #7c3aed; }
+  #modal label { font-size: 13px; color: #7c3aed; font-weight: 700; margin-bottom: 4px; display: block; }
+  #modal input, #modal textarea {
+    width: 100%; padding: 9px 14px; border: 2px solid #e9d5ff; border-radius: 12px;
+    font-size: 14px; font-family: 'Nunito', sans-serif; font-weight: 600;
+    color: #374151; outline: none; transition: border-color 0.2s;
+  }
+  #modal input:focus, #modal textarea:focus { border-color: #a855f7; }
+  #modal textarea { resize: vertical; min-height: 90px; }
+  #modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  #modal-cancel {
+    padding: 9px 20px; border: 2px solid #e9d5ff; background: #fff;
+    border-radius: 12px; cursor: pointer; font-size: 14px; font-weight: 700;
+    color: #9333ea; font-family: 'Nunito', sans-serif; transition: background 0.15s;
+  }
+  #modal-cancel:hover { background: #f3e8ff; }
+  #modal-submit {
+    padding: 9px 20px; background: #f472b6; color: #fff; border: none;
+    border-radius: 12px; cursor: pointer; font-size: 14px; font-weight: 800;
+    font-family: 'Nunito', sans-serif; transition: background 0.15s;
+  }
+  #modal-submit:hover { background: #ec4899; }
+  #modal-submit:disabled { background: #d1d5db; cursor: default; }
+
+  #empty-state {
+    width: 100%; text-align: center;
+    padding: 60px 20px; color: #c084fc; font-size: 16px; font-weight: 700;
+  }
+  .empty-icon { font-size: 48px; display: block; margin-bottom: 12px; }
+
+  .loading-spinner {
+    display: inline-block; width: 13px; height: 13px;
+    border: 2px solid #e9d5ff; border-top-color: #a855f7;
+    border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="page-header">
+  <div class="header-icon">📋</div>
+  <div>
+    <h1>Medical Assisting — Student Q&amp;A Board</h1>
+    <p>Post questions, reply to classmates, and mark answers as resolved!</p>
+  </div>
+  <button id="instructor-btn">🔒 Instructor</button>
+  <div id="instructor-badge">
+    👩‍🏫 Instructor mode
+    <button id="logout-btn">Sign out</button>
+  </div>
+</div>
+
+<div id="login-overlay">
+  <div id="login-modal">
+    <h2>🔒 Instructor login</h2>
+    <div>
+      <label>Password</label>
+      <input type="password" id="login-pw" placeholder="Enter password..." />
+    </div>
+    <div id="login-error">Incorrect password. Please try again.</div>
+    <div id="login-actions">
+      <button id="login-cancel">Cancel</button>
+      <button id="login-submit">Log in</button>
+    </div>
+  </div>
+</div>
+  <div id="how-to-content">
+    <p style="font-size:14px;font-weight:800;color:#7c3aed;margin-bottom:10px;">💡 How to use this board</p>
+    <ol>
+      <li><strong>Enter your name</strong> in the field at the top left — you must do this before posting or replying.</li>
+      <li><strong>Click "✨ Post a Question"</strong> to add a new question to the board. Keep it clear and specific so classmates can help!</li>
+      <li><strong>Reply to a classmate</strong> by typing in the reply box at the bottom of any note and clicking <em>Reply</em>.</li>
+      <li><strong>Mark a question as answered</strong> by clicking <em>Mark answered</em> on any note — the card will turn green so everyone knows it's resolved.</li>
+      <li><strong>Need urgent help?</strong> Click <em>Email instructor</em> on any note to open a pre-filled email to your instructor. Fill in your name and describe your question or concern, then hit send.</li>
+      <li><strong>Filter the board</strong> using the buttons on the right to view All, Open, or Answered questions.</li>
+      <li><strong>New posts?</strong> A pink banner will appear at the top when classmates have added new questions — click it to refresh the board.</li>
+    </ol>
+    <div class="tip-grid">
+      <span class="tip-pill">Be respectful and supportive</span>
+      <span class="tip-pill">Check for existing questions before posting</span>
+      <span class="tip-pill">Your instructor can see all posts</span>
+    </div>
+  </div>
+</div>
+
+<div id="controls">
+  <div class="name-wrap">
+    <span class="name-icon">✏️</span>
+    <input type="text" id="name-input" placeholder="Your name..." maxlength="40" />
+  </div>
+  <button id="add-btn" disabled>✨ Post a Question</button>
+  <div id="filter-btns">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="open">Open</button>
+    <button class="filter-btn" data-filter="answered">Answered</button>
+  </div>
+</div>
+
+<div id="new-posts-banner">
+  New questions have been posted — click here to see them!
+</div>
+
+<div id="status-bar">Loading board...</div>
+
+<div id="board">
+  <div id="empty-state" style="display:none;">
+    <span class="empty-icon">💬</span>
+    No questions yet — be the first to post!
+  </div>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal">
+    <h2>✨ Post a Question</h2>
+    <div>
+      <label>Posting as</label>
+      <input type="text" id="modal-name" readonly style="background:#faf5ff;color:#7c3aed;" />
+    </div>
+    <div>
+      <label>Your question</label>
+      <textarea id="modal-question" placeholder="What's on your mind?" maxlength="500"></textarea>
+    </div>
+    <div id="modal-actions">
+      <button id="modal-cancel">Cancel</button>
+      <button id="modal-submit">Post it!</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const BIN_ID = '69d6a3d6856a682189113364';
+  const API_KEY = '$2a$10$Mp7t38h0DC3He3KEDWh6RuC1cgwFHv4XF460MWZGEcK/JnXtlJG7a';
+  const BASE_URL = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
+
+  let notes = [];
+  let pendingNotes = null;
+  let currentFilter = 'all';
+  let currentName = '';
+  let isSaving = false;
+  let isInstructor = false;
+  const INSTRUCTOR_HASH = '4cd7d467191cedf445644f0e0d9e2464b67e448d048e1330e2e10b1efaef276e';
+
+  const nameInput = document.getElementById('name-input');
+  const addBtn = document.getElementById('add-btn');
+  const statusBar = document.getElementById('status-bar');
+  const board = document.getElementById('board');
+  const emptyState = document.getElementById('empty-state');
+  const modalOverlay = document.getElementById('modal-overlay');
+  const modalName = document.getElementById('modal-name');
+  const modalQuestion = document.getElementById('modal-question');
+  const modalSubmit = document.getElementById('modal-submit');
+  const modalCancel = document.getElementById('modal-cancel');
+  const newPostsBanner = document.getElementById('new-posts-banner');
+  const instructorBtn = document.getElementById('instructor-btn');
+  const instructorBadge = document.getElementById('instructor-badge');
+  const logoutBtn = document.getElementById('logout-btn');
+  const loginOverlay = document.getElementById('login-overlay');
+  const loginPw = document.getElementById('login-pw');
+  const loginError = document.getElementById('login-error');
+  const loginCancel = document.getElementById('login-cancel');
+  const loginSubmit = document.getElementById('login-submit');
+
+  instructorBtn.addEventListener('click', () => {
+    loginPw.value = '';
+    loginError.style.display = 'none';
+    loginOverlay.classList.add('open');
+    setTimeout(() => loginPw.focus(), 50);
+  });
+  loginCancel.addEventListener('click', () => loginOverlay.classList.remove('open'));
+  loginOverlay.addEventListener('click', (e) => { if (e.target === loginOverlay) loginOverlay.classList.remove('open'); });
+  loginSubmit.addEventListener('click', async () => {
+    const entered = loginPw.value;
+    const msgBuffer = new TextEncoder().encode(entered);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    if (hashHex === INSTRUCTOR_HASH) {
+      isInstructor = true;
+      loginOverlay.classList.remove('open');
+      instructorBtn.style.display = 'none';
+      instructorBadge.classList.add('visible');
+      renderBoard();
+      setStatus('Instructor mode active.');
+    } else {
+      loginError.style.display = 'block';
+      loginPw.value = '';
+      loginPw.focus();
+    }
+  });
+  loginPw.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginSubmit.click(); });
+  logoutBtn.addEventListener('click', () => {
+    isInstructor = false;
+    instructorBtn.style.display = '';
+    instructorBadge.classList.remove('visible');
+    renderBoard();
+    setStatus('Signed out of instructor mode.');
+  });
+
+  nameInput.addEventListener('input', () => {
+    currentName = nameInput.value.trim();
+    addBtn.disabled = currentName.length === 0;
+  });
+
+  addBtn.addEventListener('click', () => {
+    modalName.value = currentName;
+    modalQuestion.value = '';
+    modalOverlay.classList.add('open');
+    setTimeout(() => modalQuestion.focus(), 50);
+  });
+
+  modalCancel.addEventListener('click', () => modalOverlay.classList.remove('open'));
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) modalOverlay.classList.remove('open');
+  });
+
+  modalSubmit.addEventListener('click', async () => {
+    const q = modalQuestion.value.trim();
+    if (!q) { modalQuestion.focus(); return; }
+    modalSubmit.disabled = true;
+    modalSubmit.textContent = 'Posting...';
+    const colorIdx = notes.length % 5;
+    const note = {
+      id: Date.now().toString(),
+      author: currentName,
+      question: q,
+      timestamp: new Date().toISOString(),
+      answered: false,
+      flagged: false,
+      replies: [],
+      colorIdx: colorIdx
+    };
+    notes.unshift(note);
+    await saveNotes('Question posted!');
+    modalOverlay.classList.remove('open');
+    modalSubmit.disabled = false;
+    modalSubmit.textContent = 'Post it!';
+    renderBoard();
+  });
+
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      renderBoard();
+    });
+  });
+
+  newPostsBanner.addEventListener('click', () => {
+    if (pendingNotes) { notes = pendingNotes; pendingNotes = null; }
+    newPostsBanner.style.display = 'none';
+    renderBoard();
+    setStatus('Board updated!');
+  });
+
+  async function loadNotes(silent) {
+    if (isSaving) return;
+    if (!silent) setStatus('<span class="loading-spinner"></span> Loading board...');
+    try {
+      const res = await fetch(BASE_URL + '/latest', { headers: { 'X-Master-Key': API_KEY } });
+      const data = await res.json();
+      const incoming = data.record.notes || [];
+      if (silent) {
+        const currentIds = notes.map(n => n.id).join(',');
+        const incomingIds = incoming.map(n => n.id).join(',');
+        if (currentIds !== incomingIds) {
+          pendingNotes = incoming;
+          newPostsBanner.style.display = 'block';
+        }
+      } else {
+        notes = incoming;
+        renderBoard();
+        setStatus('Board loaded — ' + notes.length + ' question' + (notes.length !== 1 ? 's' : '') + ' posted.');
+      }
+    } catch(e) {
+      if (!silent) setStatus('Could not load the board. Please check your connection.');
+    }
+  }
+
+  async function saveNotes(successMsg) {
+    isSaving = true;
+    setStatus('<span class="loading-spinner"></span> Saving...');
+    try {
+      await fetch(BASE_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+        body: JSON.stringify({ notes })
+      });
+      setStatus(successMsg || 'Saved!');
+    } catch(e) {
+      setStatus('Warning: change may not have saved. Check your connection.');
+    }
+    isSaving = false;
+  }
+
+  function setStatus(html) { statusBar.innerHTML = html; }
+
+  function formatTime(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+      ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+
+  function esc(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderBoard() {
+    board.querySelectorAll('.note-card').forEach(n => n.remove());
+    let filtered = notes;
+    if (currentFilter === 'open') filtered = notes.filter(n => !n.answered && !n.flagged);
+    if (currentFilter === 'answered') filtered = notes.filter(n => n.answered);
+
+    if (filtered.length === 0) {
+      emptyState.style.display = '';
+      emptyState.innerHTML = currentFilter === 'all'
+        ? '<span class="empty-icon">💬</span>No questions yet — be the first to post!'
+        : '<span class="empty-icon">🔍</span>No ' + currentFilter + ' questions.';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    filtered.forEach((note, i) => {
+      const colorIdx = (note.colorIdx !== undefined) ? note.colorIdx : (i % 5);
+      const card = document.createElement('div');
+      card.className = 'note-card note-color-' + colorIdx +
+        (note.answered ? ' answered' : '') + (note.flagged ? ' flagged' : '');
+
+      const repliesHTML = note.replies && note.replies.length > 0
+        ? '<div class="replies-section">' +
+          note.replies.map(r =>
+            '<div class="reply"><span class="reply-author">' + esc(r.author) + ':</span> ' +
+            esc(r.text) + '<br><span style="font-size:11px;color:#a78bfa;">' +
+            formatTime(r.timestamp) + '</span></div>'
+          ).join('') + '</div>'
+        : '';
+
+      card.innerHTML =
+        '<div class="note-meta">' +
+          '<span class="note-author">' + esc(note.author) + '</span>' +
+          '<span class="note-time">' + formatTime(note.timestamp) + '</span>' +
+        '</div>' +
+        '<div class="note-body">' + esc(note.question) + '</div>' +
+        (note.answered ? '<span class="answered-badge">Answered</span>' : '') +
+        repliesHTML +
+        '<div class="reply-input-row">' +
+          '<input type="text" class="reply-text" placeholder="' +
+            (currentName ? 'Add a reply...' : 'Enter your name to reply') +
+            '" ' + (currentName ? '' : 'disabled') + ' maxlength="300" />' +
+          '<button class="reply-submit">Reply</button>' +
+        '</div>' +
+        '<div class="note-actions">' +
+          (isInstructor && !note.answered ? '<button class="action-btn answered-btn" data-id="' + note.id + '">Mark answered</button>' : '') +
+          (isInstructor ? '<button class="action-btn delete-btn" data-id="' + note.id + '">Delete</button>' : '') +
+          '<a class="action-btn email-btn" href="mailto:melanie.shearer@tri-c.edu?subject=Urgent%20Student%20Question%2FConcern&body=Student%20Name%3A%20%0A%0AQuestion%2FConcern%3A%20" target="_blank">Email instructor</a>' +
+        '</div>';
+
+      card.querySelector('.reply-submit').addEventListener('click', async function() {
+        if (!currentName) { nameInput.focus(); return; }
+        const input = card.querySelector('.reply-text');
+        const text = input.value.trim();
+        if (!text) { input.focus(); return; }
+        this.disabled = true;
+        const idx = notes.findIndex(n => n.id === note.id);
+        if (idx === -1) return;
+        if (!notes[idx].replies) notes[idx].replies = [];
+        notes[idx].replies.push({ author: currentName, text, timestamp: new Date().toISOString() });
+        input.value = '';
+        await saveNotes('Reply posted!');
+        renderBoard();
+      });
+
+      const answeredBtn = card.querySelector('.answered-btn');
+      if (answeredBtn) {
+        answeredBtn.addEventListener('click', async function() {
+          this.disabled = true;
+          const idx = notes.findIndex(n => n.id === this.dataset.id);
+          if (idx === -1) return;
+          notes[idx].answered = true;
+          await saveNotes('Marked as answered!');
+          renderBoard();
+        });
+      }
+
+      const deleteBtn = card.querySelector('.delete-btn');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', async function() {
+          if (!confirm('Delete this note and all its replies?')) return;
+          this.disabled = true;
+          const idx = notes.findIndex(n => n.id === this.dataset.id);
+          if (idx === -1) return;
+          notes.splice(idx, 1);
+          await saveNotes('Note deleted.');
+          renderBoard();
+        });
+      }
+
+      board.appendChild(card);
+    });
+  }
+
+  loadNotes(false);
+  setInterval(() => loadNotes(true), 30000);
+</script>
+</body>
+</html>
