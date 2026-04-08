@@ -278,7 +278,7 @@
   <div class="header-icon">📋</div>
   <div>
     <h1>Medical Assisting — Student Q&amp;A Board</h1>
-    <p>Post questions, reply to classmates, and have FUN!</p>
+    <p>Post questions, reply to classmates, and have fun!</p>
   </div>
   <button id="instructor-btn">🔒 Instructor</button>
   <div id="instructor-badge">
@@ -309,7 +309,7 @@
       <li><strong>Reply to a classmate</strong> by typing in the reply box at the bottom of any note and clicking <em>Reply</em>.</li>
       <li><strong>Need urgent help?</strong> Click <em>Email instructor</em> on any note to open a pre-filled email to your instructor. Fill in your name and describe your question or concern, then hit send.</li>
       <li><strong>Filter the board</strong> using the buttons on the right to view All, Open, or Answered questions.</li>
-     
+      <li><strong>New posts?</strong> A pink banner will appear at the top when classmates have added new questions — click it to refresh the board.</li>
     </ol>
     <div class="tip-grid">
       <span class="tip-pill">Be respectful and supportive</span>
@@ -497,9 +497,9 @@
       const data = await res.json();
       const incoming = data.record.notes || [];
       if (silent) {
-        const currentIds = notes.map(n => n.id).join(',');
-        const incomingIds = incoming.map(n => n.id).join(',');
-        if (currentIds !== incomingIds) {
+        const currentSig = JSON.stringify(notes.map(n => ({ id: n.id, replies: (n.replies||[]).length, answered: n.answered })));
+        const incomingSig = JSON.stringify(incoming.map(n => ({ id: n.id, replies: (n.replies||[]).length, answered: n.answered })));
+        if (currentSig !== incomingSig) {
           pendingNotes = incoming;
           newPostsBanner.style.display = 'block';
         }
@@ -642,3 +642,4 @@
 </script>
 </body>
 </html>
+
